@@ -36,8 +36,8 @@ namespace PracticeTask10
                 // Стягиваем вершины с указанным значением
                 Graph.Contraction(Value);
 
-                // Запись полученного графа в файл
-                Graph.WriteGraph(Path + "output");
+                //// Запись полученного графа в файл
+                Graph.WriteGraph(Path);
             }
 
             Console.WriteLine("Нажмите любую клавишу...");

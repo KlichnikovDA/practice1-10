@@ -29,19 +29,27 @@ namespace PracticeTask10
         {
             try
             {
-                P = Path.GetFullPath(P);
                 FileStream File = new FileStream(P, FileMode.Open);
                 StreamReader sr = new StreamReader(File);
                 // Размер графа
-                int Size = sr.Read() - 1;
+                int Size;
+                // Флаг правильности ввода
+                bool ok = Int32.TryParse(sr.ReadLine(), out Size);
                 // Массив значений
-                int[] Val = sr.ReadLine().Remove(Size * 2 - 1).Split(' ').Select(n => Int32.Parse(n)).ToArray();
+                string vals = sr.ReadLine();
+                int[] Val = new int[Size];
+                if (vals.Length > Size * 2 - 1)
+                    vals = vals.Remove(Size * 2 - 1);
+                Val = vals.Split(' ').Select(n => Int32.Parse(n)).ToArray();
                 // Матрица смежности
                 byte[,] Matrix = new byte[Size, Size];
                 for (int i = 0; i < Size; i++)
                 {
+                    vals = sr.ReadLine();
+                    if (vals.Length > Size * 2 - 1)
+                        vals = vals.Remove(Size * 2 - 1);
                     // Чтение строки матрицы
-                    byte[] Row = sr.ReadLine().Remove(Size * 2 - 1).Split(' ').Select(n => Byte.Parse(n)).ToArray();
+                    byte[] Row = vals.Split(' ').Select(n => Byte.Parse(n)).ToArray();
                     for (int j = 0; j < Size; j++)
                     {
                         if (Row[j] != 0 && Row[j] != 1)
@@ -66,16 +74,17 @@ namespace PracticeTask10
         }
 
         // Запись графа в файл
-        public void WriteGraph(string Path)
+        public void WriteGraph(string P)
         {
+            P = Path.GetDirectoryName(P) + Path.GetFileNameWithoutExtension(P) + "output" + Path.GetExtension(P);
             FileStream File;
             try
             {
-                File = new FileStream(Path, FileMode.Truncate);
+                File = new FileStream(P, FileMode.Truncate);
             }
             catch (FileNotFoundException)
             {
-                File = new FileStream(Path, FileMode.CreateNew);
+                File = new FileStream(P, FileMode.CreateNew);
             }
             StreamWriter sw = new StreamWriter(File);
             // Размер графа
@@ -92,7 +101,7 @@ namespace PracticeTask10
                 sw.WriteLine();
             }
 
-            Console.WriteLine("Информация об обработанном графе записана в файл " + Path);
+            Console.WriteLine("Информация об обработанном графе записана в файл " + P);
 
             sw.Close();
             File.Close();
@@ -110,8 +119,9 @@ namespace PracticeTask10
             // Номер вершины, где впервые встречается искомое значение
             int FirstVertex = Array.IndexOf(Values, Val);
 
+            int i = FirstVertex+1;
             // Проходим по оставшимся вершинам графа
-            for (int i = FirstVertex + 1; i < Size; i++)
+            while (i < Size)
             {
                 // Если нашлась еще одна вершина с искомым значением
                 if (Values[i] == Val)
@@ -134,6 +144,8 @@ namespace PracticeTask10
                     // Удаление вершины из графа
                     RemoveVertex(i);
                 }
+                else
+                    i++;
             }
         }
 
@@ -145,17 +157,24 @@ namespace PracticeTask10
             for (int i = 0; i < index; i++)
                 NewValues[i] = Values[i];
             for (int i = index + 1; i < Size; i++)
-                NewValues[i - 1] = Values[i - 1];
+                NewValues[i - 1] = Values[i];
             Values = NewValues;
 
             // Удаление вершины из матрицы
             byte[,] NewMatrix = new byte[Size - 1, Size - 1];
+
+            // Копирование незатронутой части
             for (int i = 0; i < index; i++)
                 for (int j = 0; j < index; j++)
                     NewMatrix[i, j] = AdjacencyMatrix[i, j];
-            for (int i = index + 1; i < Size; i++)
-                for (int j = index + 1; j < Size; j++)
-                    NewMatrix[i - 1, j - 1] = AdjacencyMatrix[i - 1, j - 1];
+            // Удаление столбца
+            for (int i = 0; i < NewMatrix.GetLength(0); i++)
+                for (int j = index; j < NewMatrix.GetLength(1); j++)
+                    NewMatrix[i, j] = AdjacencyMatrix[i, j + 1];
+            // Удаление строки
+            for (int i = index; i < NewMatrix.GetLength(0); i++)
+                for (int j = 0; j < NewMatrix.GetLength(1); j++)
+                    NewMatrix[i, j] = AdjacencyMatrix[i + 1, j];
             AdjacencyMatrix = NewMatrix;
 
             Size--;
